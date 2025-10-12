@@ -6,55 +6,58 @@ namespace Levenshtein
 	static class Program
 	{
 		private const string sep = "~";
-		private static string source;
-		private static string target;
-		static Program()
+		static void Main(string[] args)
 		{
-			string documents = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-			source = Path.Combine(documents, "Data/Kann et al. 2016/Original");
-			target = Path.Combine(documents, "Data/Kann et al. 2016/Aligned");
-		}
-		static void Main()
-		{
-			if (!Directory.Exists(target))
-			{
-				Directory.CreateDirectory(target);
-			}
-			foreach (string infile in Directory.GetFiles(source))
-			{
-				string name = Path.GetFileName(infile);
-				if (name.Contains("word.train") || name.Contains("word.dev"))
-				{
-					string outfile = Path.Combine(target, name);
-					if (!File.Exists(outfile))
-					{
-						Console.WriteLine(name);
-						using (StreamReader sr = new StreamReader(infile))
-						{
-							using (StreamWriter sw = new StreamWriter(outfile))
-							{
-								string line;
-								while ((line = sr.ReadLine()) != null)
-								{
-									string[] split = line.Split('\t');
-									string word = split[0];
-									if (word != String.Empty)
-									{
-										string segmentation = split[1].Replace(" @@", "@");
-										if (segmentation.Contains(sep))
-										{
-											throw new ArgumentException(line);
-										}
-										string[] aligned = LevenshteinAlignment(word, segmentation);
-										string joined = String.Join(sep, aligned);
-										sw.WriteLine(word + "\t" + joined);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+            if (args.Length == 0)
+            {
+              Console.WriteLine("A dataset should be specified as the first argument");
+            }
+            else
+            {
+                string dataset = args[0];
+                string documents = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+                string source = Path.Combine(documents, String.Format("Data/{0}/Original", dataset));
+                string target = Path.Combine(documents, String.Format("Data/{0}/Aligned", dataset));
+                if (!Directory.Exists(target))
+                {
+                    Directory.CreateDirectory(target);
+                }
+                foreach (string infile in Directory.GetFiles(source))
+                {
+                    string name = Path.GetFileName(infile);
+                    if (name.Contains("word.train") || name.Contains("word.dev"))
+                    {
+                        string outfile = Path.Combine(target, name);
+                        if (!File.Exists(outfile))
+                        {
+                            Console.WriteLine(name);
+                            using (StreamReader sr = new StreamReader(infile))
+                            {
+                                using (StreamWriter sw = new StreamWriter(outfile))
+                                {
+                                    string line;
+                                    while ((line = sr.ReadLine()) != null)
+                                    {
+                                        string[] split = line.Split('\t');
+                                        string word = split[0];
+                                        if (word != String.Empty)
+                                        {
+                                            string segmentation = split[1].Replace(" @@", "@");
+                                            if (segmentation.Contains(sep))
+                                            {
+                                                throw new ArgumentException(line);
+                                            }
+                                            string[] aligned = LevenshteinAlignment(word, segmentation);
+                                            string joined = String.Join(sep, aligned);
+                                            sw.WriteLine(word + "\t" + joined);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 		}
 		static string[] LevenshteinAlignment(string a, string b)
 		{
