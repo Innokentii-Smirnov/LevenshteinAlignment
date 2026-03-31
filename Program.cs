@@ -14,10 +14,8 @@ namespace Levenshtein
             }
             else
             {
-                string dataset = args[0];
-                string documents = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                string source = Path.Combine(documents, String.Format("Data/{0}/Original", dataset));
-                string target = Path.Combine(documents, String.Format("Data/{0}/Aligned", dataset));
+                string source = args[0];
+                string target = args[1];
                 if (!Directory.Exists(target))
                 {
                     Directory.CreateDirectory(target);
