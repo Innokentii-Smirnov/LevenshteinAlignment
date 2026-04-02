@@ -47,7 +47,15 @@ namespace Levenshtein
                                             }
                                             string[] aligned = LevenshteinAlignment(word, segmentation);
                                             string joined = String.Join(sep, aligned);
-                                            sw.WriteLine(word + "\t" + joined);
+                                            if (split.Length == 3)
+                                            {
+                                              string features = split[2];
+                                              sw.WriteLine(word + "\t" + joined + "\t" + features);
+                                            }
+                                            else
+                                            {
+                                              sw.WriteLine(word + "\t" + joined);
+                                            }
                                         }
                                     }
                                 }
