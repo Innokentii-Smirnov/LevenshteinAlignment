@@ -1,11 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Levenshtein
 {
 	static class Program
 	{
 		private const string sep = "~";
+        private static Dictionary<Tuple<char, char>, float> replacementCosts;
 		static void Main(string[] args)
 		{
             if (args.Length == 0)
@@ -16,6 +18,8 @@ namespace Levenshtein
             {
                 string source = args[0];
                 string target = args[1];
+                string costFileName = args[2];
+                replacementCosts = ReadReplacementCosts(costFileName);
                 if (!Directory.Exists(target))
                 {
                     Directory.CreateDirectory(target);
@@ -65,9 +69,45 @@ namespace Levenshtein
                 }
             }
 		}
+		static Dictionary<Tuple<char, char>, float> ReadReplacementCosts(string fileName)
+        {
+            var replacementCosts = new Dictionary<Tuple<char, char>, float>();
+            using (StreamReader sr = new StreamReader(fileName))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    string[] split = line.Split(' ');
+                    char firstChar = split[0][0];
+                    char secondChar = split[1][0];
+                    if (firstChar > secondChar)
+                    {
+                        throw new ArgumentException("The character pairs should be sorted alphabetically.");
+                    }
+                    float cost = float.Parse(split[2]);
+                    var key = Tuple.Create(firstChar, secondChar);
+                    replacementCosts.Add(key, cost);
+                }
+            }
+            return replacementCosts;
+        }
+        private static float getReplacementCost(char first, char second)
+        {
+            Tuple<char, char> key = first < second
+                ? Tuple.Create(first, second)
+                : Tuple.Create(second, first);
+            if (replacementCosts.ContainsKey(key))
+            {
+                return replacementCosts[key];
+            }
+            else
+            {
+                return Convert.ToInt32(first != second);
+            }
+        }
 		static string[] LevenshteinAlignment(string a, string b)
 		{
-			int[,] m = new int[a.Length, b.Length];
+			float[,] m = new float[a.Length, b.Length];
 			int[,] o = new int[a.Length, b.Length];
 			m[0, 0] = Convert.ToInt32(a[0] != b[0]);
 			o[0, 0] = 0;
@@ -85,9 +125,9 @@ namespace Levenshtein
 			{
 				for (int j = 1; j < b.Length; j++)
 				{
-					int fromInsertion = m[i, j - 1] + 1;
-					int fromDeletion = m[i - 1, j] + 1;
-					int fromMatch = m[i - 1, j - 1] + Convert.ToInt32(a[i] != b[j]);
+					float fromInsertion = m[i, j - 1] + 1;
+					float fromDeletion = m[i - 1, j] + 1;
+					float fromMatch = m[i - 1, j - 1] + getReplacementCost(a[i], b[j]);
 					if (fromMatch < fromDeletion)
 					{
 						if (fromMatch < fromInsertion)
