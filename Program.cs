@@ -50,6 +50,13 @@ namespace Levenshtein
                                                 throw new ArgumentException(line);
                                             }
                                             string[] aligned = LevenshteinAlignment(word, segmentation);
+                                            if (String.Join("", aligned) != segmentation)
+                                            {
+                                                Console.WriteLine(
+                                                  "Incorrect alignment: {0:20} {1:30} for {2}",
+                                                  word, String.Join(" ", aligned), segmentation
+                                                );
+                                            }
                                             string joined = String.Join(sep, aligned);
                                             if (split.Length == 3)
                                             {
