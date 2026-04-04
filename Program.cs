@@ -10,9 +10,9 @@ namespace Levenshtein
         private const string replacementCostFileName = "Replacements.txt";
         private const string insertionCostFileName = "Insertions.txt";
         private const string deletionCostFileName = "Deletions.txt";
-        private static Dictionary<Tuple<char, char>, float> replacementCosts;
-        private static Dictionary<char, float> insertionCosts;
-        private static Dictionary<char, float> deletionCosts;
+        private static Dictionary<Tuple<char, char>, int> replacementCosts;
+        private static Dictionary<char, int> insertionCosts;
+        private static Dictionary<char, int> deletionCosts;
         private static string costDirectory;
         private static string ReplacementCostFilePath
         {
@@ -105,9 +105,9 @@ namespace Levenshtein
                 }
             }
 		}
-		static Dictionary<Tuple<char, char>, float> ReadReplacementCosts(string fileName)
+		static Dictionary<Tuple<char, char>, int> ReadReplacementCosts(string fileName)
         {
-            var replacementCosts = new Dictionary<Tuple<char, char>, float>();
+            var replacementCosts = new Dictionary<Tuple<char, char>, int>();
             using (StreamReader sr = new StreamReader(fileName))
             {
                 string line;
@@ -120,16 +120,16 @@ namespace Levenshtein
                     {
                         throw new ArgumentException("The character pairs should be sorted alphabetically.");
                     }
-                    float cost = float.Parse(split[2]);
+                    int cost = int.Parse(split[2]);
                     var key = Tuple.Create(firstChar, secondChar);
                     replacementCosts.Add(key, cost);
                 }
             }
             return replacementCosts;
         }
-        static Dictionary<char, float> ReadCharacterToCostMapping(string fileName)
+        static Dictionary<char, int> ReadCharacterToCostMapping(string fileName)
         {
-            var characterToCost = new Dictionary<char, float>();
+            var characterToCost = new Dictionary<char, int>();
             using (StreamReader sr = new StreamReader(fileName))
             {
                 string line;
@@ -137,13 +137,13 @@ namespace Levenshtein
                 {
                     string[] split = line.Split(" ");
                     char character = split[0][0];
-                    float cost = float.Parse(split[1]);
+                    int cost = int.Parse(split[1]);
                     characterToCost.Add(character, cost);
                 }
             }
             return characterToCost;
         }
-        private static float getReplacementCost(char first, char second)
+        private static int getReplacementCost(char first, char second)
         {
             Tuple<char, char> key = first < second
                 ? Tuple.Create(first, second)
@@ -154,10 +154,10 @@ namespace Levenshtein
             }
             else
             {
-                return Convert.ToInt32(first != second);
+                return Convert.ToInt32(first != second) * 10;
             }
         }
-        private static float getInsertionCost(char character)
+        private static int getInsertionCost(char character)
         {
             if (insertionCosts.ContainsKey(character))
             {
@@ -165,10 +165,10 @@ namespace Levenshtein
             }
             else
             {
-                return 1.0F;
+                return 10;
             }
         }
-        private static float getDeletionCost(char character)
+        private static int getDeletionCost(char character)
         {
           if (deletionCosts.ContainsKey(character))
           {
@@ -176,12 +176,12 @@ namespace Levenshtein
           }
           else
           {
-            return 1.0F;
+            return 10;
           }
         }
 		static string[] LevenshteinAlignment(string a, string b)
 		{
-			float[,] m = new float[a.Length, b.Length];
+			int[,] m = new int[a.Length, b.Length];
 			int[,] o = new int[a.Length, b.Length];
 			m[0, 0] = 0;
 			o[0, 0] = 0;
@@ -199,9 +199,9 @@ namespace Levenshtein
 			{
 				for (int j = 1; j < b.Length; j++)
 				{
-					float fromInsertion = m[i, j - 1] + getInsertionCost(b[j]);
-					float fromDeletion = m[i - 1, j]  + getDeletionCost(a[i]);
-					float fromMatch = m[i - 1, j - 1] + getReplacementCost(a[i], b[j]);
+					int fromInsertion = m[i, j - 1] + getInsertionCost(b[j]);
+					int fromDeletion = m[i - 1, j]  + getDeletionCost(a[i]);
+					int fromMatch = m[i - 1, j - 1] + getReplacementCost(a[i], b[j]);
 					if (fromMatch < fromDeletion)
 					{
 						if (fromMatch < fromInsertion)
