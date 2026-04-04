@@ -116,7 +116,7 @@ namespace Levenshtein
 		{
 			float[,] m = new float[a.Length, b.Length];
 			int[,] o = new int[a.Length, b.Length];
-			m[0, 0] = Convert.ToInt32(a[0] != b[0]);
+			m[0, 0] = getReplacementCost(a[0], b[0]);
 			o[0, 0] = 0;
 			for (int i = 1; i < a.Length; i++)
 			{
