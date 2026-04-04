@@ -126,7 +126,7 @@ namespace Levenshtein
                 while ((line = sr.ReadLine()) != null)
                 {
                     string[] split = line.Split(" ");
-                    char character = split[0][1];
+                    char character = split[0][0];
                     float cost = float.Parse(split[1]);
                     characterToCost.Add(character, cost);
                 }
