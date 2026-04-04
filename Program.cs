@@ -246,7 +246,6 @@ namespace Levenshtein
 					}
 					else if (op == -1)
 					{
-						c[i] = String.Empty;
 						i--;
 					}
 					else
