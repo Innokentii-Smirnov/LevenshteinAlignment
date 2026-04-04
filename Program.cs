@@ -9,8 +9,10 @@ namespace Levenshtein
 		private const string sep = "~";
         private const string replacementCostFileName = "Replacements.txt";
         private const string insertionCostFileName = "Insertions.txt";
+        private const string deletionCostFileName = "Deletions.txt";
         private static Dictionary<Tuple<char, char>, float> replacementCosts;
         private static Dictionary<char, float> insertionCosts;
+        private static Dictionary<char, float> deletionCosts;
         private static string costDirectory;
         private static string ReplacementCostFilePath
         {
@@ -26,6 +28,13 @@ namespace Levenshtein
                 return Path.Combine(costDirectory, insertionCostFileName);
             }
         }
+        private static string DeletionCostFilePath
+        {
+          get
+          {
+            return Path.Combine(costDirectory, deletionCostFileName);
+          }
+        }
 		static void Main(string[] args)
 		{
             if (args.Length == 0)
@@ -39,6 +48,7 @@ namespace Levenshtein
                 costDirectory = args[2];
                 replacementCosts = ReadReplacementCosts(ReplacementCostFilePath);
                 insertionCosts = ReadCharacterToCostMapping(InsertionCostFilePath);
+                deletionCosts = ReadCharacterToCostMapping(DeletionCostFilePath);
                 if (!Directory.Exists(target))
                 {
                     Directory.CreateDirectory(target);
@@ -158,6 +168,17 @@ namespace Levenshtein
                 return 1.0F;
             }
         }
+        private static float getDeletionCost(char character)
+        {
+          if (deletionCosts.ContainsKey(character))
+          {
+            return deletionCosts[character];
+          }
+          else
+          {
+            return 1.0F;
+          }
+        }
 		static string[] LevenshteinAlignment(string a, string b)
 		{
 			float[,] m = new float[a.Length, b.Length];
@@ -166,7 +187,7 @@ namespace Levenshtein
 			o[0, 0] = 0;
 			for (int i = 1; i < a.Length; i++)
 			{
-				m[i, 0] = i;
+				m[i, 0] = m[i - 1, 0] + getDeletionCost(a[i]);
 				o[i, 0] = -1;
 			}
 			for (int j = 1; j < b.Length; j++)
@@ -179,7 +200,7 @@ namespace Levenshtein
 				for (int j = 1; j < b.Length; j++)
 				{
 					float fromInsertion = m[i, j - 1] + getInsertionCost(b[j]);
-					float fromDeletion = m[i - 1, j] + 1;
+					float fromDeletion = m[i - 1, j]  + getDeletionCost(a[i]);
 					float fromMatch = m[i - 1, j - 1] + getReplacementCost(a[i], b[j]);
 					if (fromMatch < fromDeletion)
 					{
