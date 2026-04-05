@@ -10,9 +10,11 @@ namespace Levenshtein
         private const string replacementCostFileName = "Replacements.txt";
         private const string insertionCostFileName = "Insertions.txt";
         private const string deletionCostFileName = "Deletions.txt";
+        private const string characterClassFileName = "CharacterClasses.txt";
         private static Dictionary<Tuple<char, char>, int> replacementCosts;
         private static Dictionary<char, int> insertionCosts;
         private static Dictionary<char, int> deletionCosts;
+        private static Dictionary<char, char> characterClasses;
         private static string costDirectory;
         private static string ReplacementCostFilePath
         {
@@ -35,6 +37,13 @@ namespace Levenshtein
             return Path.Combine(costDirectory, deletionCostFileName);
           }
         }
+        private static string CharacterClassFilePath
+        {
+          get
+          {
+            return Path.Combine(costDirectory, characterClassFileName);
+          }
+        }
 		static void Main(string[] args)
 		{
             if (args.Length == 0)
@@ -49,6 +58,7 @@ namespace Levenshtein
                 replacementCosts = ReadReplacementCosts(ReplacementCostFilePath);
                 insertionCosts = ReadCharacterToCostMapping(InsertionCostFilePath);
                 deletionCosts = ReadCharacterToCostMapping(DeletionCostFilePath);
+                characterClasses = ReadCharacterToClassMapping(CharacterClassFilePath);
                 if (!Directory.Exists(target))
                 {
                     Directory.CreateDirectory(target);
@@ -143,6 +153,22 @@ namespace Levenshtein
             }
             return characterToCost;
         }
+        static Dictionary<char, char> ReadCharacterToClassMapping(string fileName)
+        {
+          var characterToClass = new Dictionary<char, char>();
+          using (StreamReader sr = new StreamReader(fileName))
+          {
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+              string[] split = line.Split(" ");
+              char character = split[0][0];
+              char characterClass = split[1][0];
+              characterToClass.Add(character, characterClass);
+            }
+          }
+          return characterToClass;
+        }
         private static int getReplacementCost(char first, char second)
         {
             Tuple<char, char> key = first < second
@@ -154,7 +180,14 @@ namespace Levenshtein
             }
             else
             {
-                return Convert.ToInt32(first != second) * 10;
+                if (first == second)
+                {
+                   return 0;
+                }
+                else
+                {
+                    return getCharacterClass(first) == getCharacterClass(second) ? 10 : 100;
+                }
             }
         }
         private static int getInsertionCost(char character)
@@ -177,6 +210,19 @@ namespace Levenshtein
           else
           {
             return 10;
+          }
+        }
+        private static int getCharacterClass(char character)
+        {
+          if (characterClasses.ContainsKey(character))
+          {
+            return characterClasses[character];
+          }
+          else
+          {
+            throw new ArgumentException(
+              String.Format("No class is specified for the character {0}.", character)
+            );
           }
         }
 		static string[] LevenshteinAlignment(string a, string b)
