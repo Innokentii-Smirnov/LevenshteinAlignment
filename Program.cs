@@ -282,12 +282,13 @@ namespace Levenshtein
 			{
 				int i = a.Length - 1;
 				int j = b.Length - 1;
+                string buffer = String.Empty;
 				while (i >= 0 || j >= 0)
 				{
 					int op = o[i, j];
 					if (op == 1)
 					{
-						c[i] = b[j] + c[i];
+						buffer = b[j] + buffer;
 						j--;
 					}
 					else if (op == -1)
@@ -296,11 +297,16 @@ namespace Levenshtein
 					}
 					else
 					{
-						c[i] = b[j] + c[i];
+						c[i] = b[j] + buffer;
+                        buffer = String.Empty;
 						i--;
 						j--;
 					}
 				}
+				if (buffer.Length > 0)
+                {
+                    c[0] = buffer + c[0];
+                }
 			}
 			return c;
 		}
