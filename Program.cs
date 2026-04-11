@@ -222,6 +222,7 @@ namespace Levenshtein
         }
         private static int getCharacterClass(char character)
         {
+          character = char.ToLowerInvariant(character);
           if (characterClasses.ContainsKey(character))
           {
             return characterClasses[character];
