@@ -118,6 +118,10 @@ namespace Levenshtein
 		static Dictionary<Tuple<char, char>, int> ReadReplacementCosts(string fileName)
         {
             var replacementCosts = new Dictionary<Tuple<char, char>, int>();
+            if (!File.Exists(fileName))
+            {
+                return replacementCosts;
+            }
             using (StreamReader sr = new StreamReader(fileName))
             {
                 string line;
@@ -140,6 +144,10 @@ namespace Levenshtein
         static Dictionary<char, int> ReadCharacterToCostMapping(string fileName)
         {
             var characterToCost = new Dictionary<char, int>();
+            if (!File.Exists(fileName))
+            {
+                return characterToCost;
+            }
             using (StreamReader sr = new StreamReader(fileName))
             {
                 string line;
