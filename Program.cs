@@ -46,15 +46,15 @@ namespace Levenshtein
         }
 		static void Main(string[] args)
 		{
-            if (args.Length == 0)
+            if (args.Length < 2)
             {
-              Console.WriteLine("A dataset should be specified as the first argument");
+              Console.WriteLine("A list of input files, an output directory and a path to the directory containing files with operation costs should be specified as command line arguments.");
             }
             else
             {
-                string source = args[0];
-                string target = args[1];
-                costDirectory = args[2];
+                ArraySegment<string> infiles = new ArraySegment<string>(args).Slice(0, args.Length - 2);
+                string target = args[args.Length - 2];
+                costDirectory = args[args.Length - 1];
                 replacementCosts = ReadReplacementCosts(ReplacementCostFilePath);
                 insertionCosts = ReadCharacterToCostMapping(InsertionCostFilePath);
                 deletionCosts = ReadCharacterToCostMapping(DeletionCostFilePath);
@@ -63,54 +63,55 @@ namespace Levenshtein
                 {
                     Directory.CreateDirectory(target);
                 }
-                foreach (string infile in Directory.GetFiles(source))
+                foreach (string infile in infiles)
                 {
                     string name = Path.GetFileName(infile);
-                    if (name.Contains("word.train") || name.Contains("word.dev"))
+                    string outfile = Path.Combine(target, name);
+                    if (!File.Exists(outfile))
                     {
-                        string outfile = Path.Combine(target, name);
-                        if (!File.Exists(outfile))
+                        Console.WriteLine(name);
+                        using (StreamReader sr = new StreamReader(infile))
                         {
-                            Console.WriteLine(name);
-                            using (StreamReader sr = new StreamReader(infile))
+                            using (StreamWriter sw = new StreamWriter(outfile))
                             {
-                                using (StreamWriter sw = new StreamWriter(outfile))
+                                string line;
+                                while ((line = sr.ReadLine()) != null)
                                 {
-                                    string line;
-                                    while ((line = sr.ReadLine()) != null)
+                                    string[] split = line.Split('\t');
+                                    string word = split[0];
+                                    if (word != String.Empty)
                                     {
-                                        string[] split = line.Split('\t');
-                                        string word = split[0];
-                                        if (word != String.Empty)
+                                        string segmentation = split[1].Replace(" @@", "@");
+                                        if (segmentation.Contains(sep))
                                         {
-                                            string segmentation = split[1].Replace(" @@", "@");
-                                            if (segmentation.Contains(sep))
-                                            {
-                                                throw new ArgumentException(line);
-                                            }
-                                            string[] aligned = LevenshteinAlignment(word, segmentation);
-                                            if (String.Join("", aligned) != segmentation)
-                                            {
-                                                Console.WriteLine(
-                                                  "Incorrect alignment: {0:20} {1:30} for {2}",
-                                                  word, String.Join(" ", aligned), segmentation
-                                                );
-                                            }
-                                            string joined = String.Join(sep, aligned);
-                                            if (split.Length == 3)
-                                            {
-                                              string features = split[2];
-                                              sw.WriteLine(word + "\t" + joined + "\t" + features);
-                                            }
-                                            else
-                                            {
-                                              sw.WriteLine(word + "\t" + joined);
-                                            }
+                                            throw new ArgumentException(line);
+                                        }
+                                        string[] aligned = LevenshteinAlignment(word, segmentation);
+                                        if (String.Join("", aligned) != segmentation)
+                                        {
+                                            Console.WriteLine(
+                                              "Incorrect alignment: {0:20} {1:30} for {2}",
+                                              word, String.Join(" ", aligned), segmentation
+                                            );
+                                        }
+                                        string joined = String.Join(sep, aligned);
+                                        if (split.Length == 3)
+                                        {
+                                          string features = split[2];
+                                          sw.WriteLine(word + "\t" + joined + "\t" + features);
+                                        }
+                                        else
+                                        {
+                                          sw.WriteLine(word + "\t" + joined);
                                         }
                                     }
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("Already exists: {0}", outfile);
                     }
                 }
             }
