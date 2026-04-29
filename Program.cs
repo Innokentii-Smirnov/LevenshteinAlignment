@@ -170,9 +170,8 @@ namespace Levenshtein
             string line;
             while ((line = sr.ReadLine()) != null)
             {
-              string[] split = line.Split(" ");
-              char character = split[0][0];
-              char characterClass = split[1][0];
+              char character = line[0];
+              char characterClass = line[2];
               characterToClass.Add(character, characterClass);
             }
           }
